@@ -98,6 +98,22 @@ All functions use Try, Catch blocks.
 
 The catch section is the same on all functions, it's just to allow easier debugging and stop the script if something goes wrong.
 
+        Catch {
+            Write-Host "Error in EnableAutoLogon"
+            Write-Host $_
+            Write-Host $_.ScriptStackTrace
+            Cleanup
+            Pause
+            Throw -1
+        }
+
+Firstly a simple message is shown to point to the failing function.
+The $_ is an automatically created error variable that should include the full error message.
+$_.ScriptStackTrace should shown the line number of the error.
+The Cleanup function is run which will clear the auto-startup of the script and remove some of the txt files.
+Pause to allow the message to be kept on screen.
+Throw will exit the script with a failure code -1.
+
 ### Simple Function - **CleanUp**
 
 It doesn't take any parameters and it doesn't return any data. You can just call the function on it's own.
@@ -140,7 +156,7 @@ So we call the function with the required parameter "operation". And then take t
 
 ### Practical Test
 
-Run the script on a spare PC. Run through the first menu choosing options as you would for a normal build. Exit the script once all the menus are done. Check inside the C:\temp\
+Run the script on a spare PC. Run through the first menu choosing options as you would for a normal build. Exit the script once all the menus are done. Check inside the C:\temp\userconfig\ folder for the various txt files that have been created and look at the contents.
 
 ### Storing Options
 
