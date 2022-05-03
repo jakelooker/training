@@ -2,19 +2,21 @@
 
 ## Level 1 - The Main Process
 
-*skip to line*
+*reference*
 
         if ((Test-Path -Path $statusfile) -eq $false){
 
 Ignore the classes, variables and functions... This *main* part of the program is what it actually does.
-It should be somewhat easy to read through it and understand the process.
+Each line is calling functions that have been created earlier in the script. So if a part doesn't make sense just by it's name, take a look at that function for more information on what it does.
 The process is broken into sections using checks on the **status file**, sometimes seperated by reboots.
 
 ## Level 2 - Status File
 
-*reference line 114*
+*reference*
 
-*skip to line*
+        $statusFile = "$($workingDir)\status.txt"
+
+*reference*
 
         if ((Test-Path -Path $statusfile) -eq $false){
 
@@ -24,7 +26,9 @@ This pattern continues through each step of the status file, until finally we se
 
 ## Level 3 - Continuing after reboots
 
-*reference function "Startup"*
+*reference*
+
+        function Startup {
 
 In this function we copy the batch file launcher to the system wide startup folder.
 
@@ -32,13 +36,15 @@ In this function we copy the batch file launcher to the system wide startup fold
 
 But if we just ran the script each boot, it would do the same thing each time...
 
-*reference line*
+*reference*
 
         Set-Content -Path $statusfile -Value "1"
 
 At the end of this if statement, we create the status file and then optionally reboot. *Let's ignore the fact it's optional for the moment*.
 
-*reference function "RebootComputer"*
+*reference*
+
+        function RebootComputer {
 
 We are now running the RebootComputer function. As part of this there is this line.
 
@@ -50,25 +56,25 @@ It works it's way to the if statements around the status file and then picks up 
 
 ## Level 4 - Data/Variables
 
-*reference line*
+*reference*
 
         $loginDomain = "tycoelectronics"
 
 The first batch of variables defines where the local files will go on the machine. The working directory is defined first and then the rest of the files go inside it.
 
-*reference line*
+*reference*
 
         $psexecEXE = "\\gb.tycoelectronics.com\netlogon\UKRSD-Scripts\userConfig\psexec.exe"
 
 The next batch is items that live on the network that will get copied to the local PC.
 
-*reference line*
+*reference*
 
         $dellUpdateCLI = "C:\Program Files (x86)\dell\CommandUpdate\dcu-cli.exe"
 
 The location of the Dell Command Update Command Line tool. This could change if DCU gets updated/change as part of the base Dell Image.
 
-*reference line*
+*reference*
 
         $global:packages = @()
 
@@ -116,9 +122,13 @@ Throw will exit the script with a failure code -1.
 
 ### Simple Function - **CleanUp**
 
+        function CleanUp {
+
 It doesn't take any parameters and it doesn't return any data. You can just call the function on it's own.
 
 ### Intermediate Function **AddUserToAdminGroup**
+
+        function AddUserToAdminGroup {
 
 It has a parameter block at the start -
 
@@ -135,6 +145,8 @@ It has a parameter block at the start -
 Also note the parameter has a strict data type of [pscredential], if we try to send something different to it, it will error (and therefore trigger the Catch block). This reduces the need to check for mismatched data in the function. We can just assume it will be right type.
 
 ### Advanced Function **DellUpdater**
+
+        function DellUpdater {
 
 This function also has a parameter block that accepts data, although not from the pipeline this time. However it also returns data back.
 
@@ -160,22 +172,26 @@ Run the script on a spare PC. Run through the first menu choosing options as you
 
 ### Storing Options
 
-*reference line*
+*reference*
 
         ToggleMenu -menuInputs $mainMenuChoices -menuTitle "Main Menu - Which functions do you want to run?" -defaultState $true | StoreOptions -optionName "main"
 
-*reference function "StoreOptions"*
+*reference*
+
+        function StoreOptions {
 
 StoreOptions accepts two inputs, one is the data to save, one is the name of the file to say it to.
 So with the above example we create a toggle menu for the main menu items. Once the choices have been confirmed the items that are true get passed to StoreOptions. Each entry will be saved on a seperate line of main.txt
 
 ### Retrieving Options
 
-*reference line*
+*reference*
 
         PackageInstaller (RetrieveOptions -optionName packages)
 
-*reference function "RetrieveOptions"*
+*reference*
+
+        function RetrieveOptions {
 
 We have to pass the "optionName" parameter to RetrieveOptions. The function will then look for a .txt file with that name. If it finds it, it will read the data line by line and create an array of data. This can be passed on to another functions, for example PackageInstaller.
 
@@ -187,11 +203,17 @@ Take a look at the customer.txt and engineer.txt files. The username is in plain
 
 ### Storing
 
-*reference line*
+*reference*
 
         GetCredentials "Engineer" | StoreCredentials -filename "engineer"
 
-*reference function "GetCredentials", "StoreCredentials"*
+*reference*
+
+        function GetCredentials {
+
+*reference*
+
+        function StoreCredentials {
 
 First we call GetCredentials with "Engineer" as the $promptname. This function creates a prompt to type in credentials. It also has a second Try, Catch block that tests the login you have enterred by running a process. If the process cannot start, you will be sent in a loop to re-enter the details. Because this function uses the built-in "Get-Credentials" cmdlet, the password is stored as secure-string, not as plain text.
 
@@ -199,11 +221,13 @@ StoreCredentials breaks up the username and password into seperate entries and s
 
 ## Retrieving
 
-*reference line*
+*reference*
 
         RetrieveCredentials engineer | EnableAutoLogon
 
-*reference function "RetrieveCredentials"*
+*reference*
+
+        function RetrieveCredentials {
 
 We now retrieve the login information we need by referencing the text file we saved it to. The password will be changed back into a secure-string.
 
